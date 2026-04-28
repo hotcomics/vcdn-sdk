@@ -1,0 +1,47 @@
+{
+  "name": "@vcdn/node",
+  "version": "0.1.0",
+  "description": "Node.js SDK for VCDN upload-service public API",
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap --external axios --external fast-glob --external m3u8-parser --external p-limit",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm run build && pnpm run typecheck"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@vcdn/sdk-shared": "workspace:*",
+    "axios": "^1.15.2",
+    "fast-glob": "^3.3.3",
+    "m3u8-parser": "^7.2.0",
+    "p-limit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/m3u8-parser": "^7.2.6",
+    "@types/node": "^20.14.11",
+    "tsup": "^8.3.5",
+    "typescript": "^5.5.4"
+  }
+}

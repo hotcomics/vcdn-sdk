@@ -1,0 +1,33 @@
+{
+  "name": "vcdn-sdk-workspace",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Video CDN SDK for upload, streaming (HLS), and playback integration",
+  "keywords": [
+    "vcdn-sdk"
+  ],
+  "homepage": "https://github.com/hotcomics/vcdn-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/hotcomics/vcdn-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hotcomics/vcdn-sdk.git"
+  },
+  "license": "ISC",
+  "author": "vcdn",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter @vcdn/sdk-shared --filter @vcdn/browser --filter @vcdn/node run build",
+    "typecheck": "pnpm -r --filter @vcdn/sdk-shared --filter @vcdn/browser --filter @vcdn/node run typecheck",
+    "clean": "pnpm -r run clean",
+    "pack:dry-run": "mkdir -p .artifacts && pnpm --dir shared pack --pack-destination ../.artifacts && pnpm --dir browser pack --pack-destination ../.artifacts && pnpm --dir node pack --pack-destination ../.artifacts",
+    "publish:check": "pnpm run build && pnpm run typecheck && pnpm run pack:dry-run"
+  },
+  "devDependencies": {},
+  "packageManager": "pnpm@9.12.0"
+}

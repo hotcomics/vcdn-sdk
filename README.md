@@ -6,7 +6,7 @@ TypeScript SDK workspace for the upload-service public API (`/api/v1/*`), includ
 
 - `shared/` -> `@vcdn/sdk-shared`: shared types, HTTP client, and error model.
 - `browser/` -> `@vcdn/browser`: browser multipart upload + resume.
-- `node/` -> `@vcdn/node`: Node upload + video APIs + playback token.
+- `node/` -> `@vcdn/node`: Node multipart upload + video APIs + playback token, plus **`VcdnClient`** for **HLS directory** ingest (see [docs/hls-upload-node.md](./docs/hls-upload-node.md)).
 
 ## Prerequisites
 
@@ -113,6 +113,26 @@ const playback = await client.createPlaybackToken(video.id, { ttlSeconds: 600 })
 console.log(playback.streamUrl);
 ```
 
+### HLS directory upload (`VcdnClient`)
+
+Use **`VcdnClient`** (axios-based, same API key and origin rules) when you have a folder with **one** media `.m3u8` and `.ts` segments on disk. Master playlists and multiple `.m3u8` trees under one root are not supported.
+
+```ts
+import { VcdnClient } from "@vcdn/node";
+
+const hls = new VcdnClient({
+  apiKey: process.env.VCDN_API_KEY!,
+  baseUrl: process.env.VCDN_BASE_URL!,
+});
+
+const { video_id, upload_id } = await hls.uploadHLS({
+  path: "/path/to/hls-output",
+  onProgress: (p) => console.log(`${p}%`),
+});
+```
+
+Full options, error codes (`VcdnHlsError`), and HTTP references: **[docs/hls-upload-node.md](./docs/hls-upload-node.md)**.
+
 ## Error handling
 
 Both SDKs throw `VcdnApiError` on non-2xx responses.
@@ -131,11 +151,17 @@ try {
 
 ## API coverage
 
-- Upload:
+- Upload (multipart):
   - `POST /api/v1/upload/init`
   - `GET /api/v1/upload/{uploadId}/status`
   - `POST /api/v1/upload/{uploadId}/chunk`
   - `POST /api/v1/upload/complete`
+- HLS ingest (`VcdnClient`):
+  - `POST /api/v1/videos/init-hls-upload`
+  - `HEAD/PUT /api/v1/videos/{id}/segments/{name}`
+  - `PUT /api/v1/videos/{id}/playlist`
+  - `POST /api/v1/videos/{id}/complete`
+  - `GET /api/v1/videos/{id}` (poll until `ready`)
 - Video:
   - `GET /api/v1/videos`
   - `GET /api/v1/videos/{id}`

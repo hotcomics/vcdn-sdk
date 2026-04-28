@@ -1,0 +1,32 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# pnpm pack / publish dry-run
+.artifacts/
+*.tgz
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editors (local only)
+.idea/
+
+# tests / coverage
+coverage/
+
+# local env (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# caches
+.eslintcache
