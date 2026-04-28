@@ -411,6 +411,7 @@ export class VcdnClient {
         async () => {
           const headers: Record<string, string> = {
             "Content-Type": "video/MP2T",
+            "Content-Length": String(st.size),
           };
           if (checksumHex) {
             headers["X-Segment-Sha256"] = checksumHex;
@@ -456,8 +457,12 @@ export class VcdnClient {
     await withRetries(
       async () => {
         const plStream = createReadStream(playlistPath);
+        const plStat = await stat(playlistPath);
         const res = await this.axios.put(playlistUrl, plStream, {
-          headers: { "Content-Type": "application/vnd.apple.mpegurl" },
+          headers: {
+            "Content-Type": "application/vnd.apple.mpegurl",
+            "Content-Length": String(plStat.size),
+          },
           signal,
           maxBodyLength: Infinity,
           maxContentLength: Infinity,
