@@ -34,6 +34,8 @@ export interface UploadInitRequest {
   size: number;
   contentType?: string;
   title?: string;
+  /** Optional dashboard/BFF workspace hint. Public API deployments may ignore it and derive scope from the API key. */
+  projectId?: string;
   quality?: "360p" | "720p" | "1080p";
   ladderProfile?:
     | "debug"
