@@ -20,7 +20,7 @@ The `@vcdn/node` package exposes **`VcdnClient`** (`import { VcdnClient } from "
 
 ## Flow (what the SDK does)
 
-1. `POST /api/v1/videos/init-hls-upload` → `video_id`, `upload_id`.
+1. `POST /api/v1/videos/init-hls-upload` with optional `title` → `video_id`, `upload_id`.
 2. For each `.ts` in playlist order: `HEAD` segment URL → skip if `200`; on `404`, `PUT` body as `video/MP2T`, optional `X-Segment-Sha256` hex if `checksum: true`.
 3. `PUT` the media playlist as `application/vnd.apple.mpegurl`.
 4. `POST /api/v1/videos/{id}/complete`.
@@ -44,6 +44,7 @@ const ac = new AbortController();
 
 const out = await client.uploadHLS({
   path: "/path/to/hls-out",
+  title: "Episode 12 - 720p HLS",
   concurrency: 8,
   onProgress: (pct) => console.log(`${pct}%`),
   signal: ac.signal,
@@ -61,6 +62,7 @@ console.log(out.video_id, out.upload_id, out.bytesUploaded, out.segmentUploadMs)
 | Field | Description |
 |--------|-------------|
 | `path` | Root directory to scan for the single `.m3u8`. |
+| `title` | Optional display title for the created video. Defaults to `HLS SDK Upload`. |
 | `concurrency` | Parallel segment uploads; clamped **5–10**, default **8**. |
 | `onProgress` | `0–100` as segments finish (uploaded or skipped). |
 | `signal` | `AbortSignal` to cancel in-flight work. |

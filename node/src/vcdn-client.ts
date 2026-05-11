@@ -27,6 +27,8 @@ export interface VcdnClientOptions {
 
 export interface UploadHLSOptions {
   path: string;
+  /** Display title for the created video. Defaults to `HLS SDK Upload` when omitted. */
+  title?: string;
   /** Parallel segment uploads (clamped to 5–10). Default 8. */
   concurrency?: number;
   /** Called with completion percent 0–100 as segments finish (upload or skip). */
@@ -176,6 +178,10 @@ async function withRetries<T>(
     }
   }
   throw mapAxiosError(last, label);
+}
+
+interface InitHlsUploadRequest {
+  title?: string;
 }
 
 interface InitHlsResponse {
@@ -352,9 +358,14 @@ export class VcdnClient {
 
     const initRes = await withRetries(
       async () => {
+        const body: InitHlsUploadRequest = {};
+        const title = options.title?.trim();
+        if (title) {
+          body.title = title;
+        }
         const res = await this.axios.post<InitHlsResponse>(
           `${API_VIDEOS}/init-hls-upload`,
-          {},
+          body,
           { signal },
         );
         if (res.status !== 200) {

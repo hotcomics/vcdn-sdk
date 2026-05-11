@@ -86,6 +86,7 @@ const hls = new VcdnClient({
 
 const result = await hls.uploadHLS({
   path: "/path/to/hls-output",
+  title: "Release demo HLS",
   concurrency: 8,
   metrics: true,
   onProgress: (percent) => console.log(`${percent}%`),
@@ -94,7 +95,7 @@ const result = await hls.uploadHLS({
 console.log(result.video_id, result.upload_id);
 ```
 
-`uploadHLS` uploads missing `.ts` segments, uploads the playlist, completes the video, and waits until the video is `ready`.
+`uploadHLS` uploads missing `.ts` segments, uploads the playlist, completes the video, and waits until the video is `ready`. Pass `title` to set the video title shown in dashboards/lists.
 
 ## Error Handling
 
