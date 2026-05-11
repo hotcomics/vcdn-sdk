@@ -1,6 +1,6 @@
 {
   "name": "@vcdn/browser",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "Browser SDK for VCDN upload-service public API",
   "license": "UNLICENSED",
   "type": "module",
@@ -16,7 +16,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "LICENSE"],
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -27,7 +30,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@vcdn/sdk-shared": "workspace:*"
+    "@vcdn/sdk-shared": "^0.1.1"
   },
   "devDependencies": {
     "tsup": "^8.3.5",

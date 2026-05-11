@@ -11,8 +11,8 @@ importers:
   browser:
     dependencies:
       '@vcdn/sdk-shared':
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.1.1
+        version: 0.1.1
     devDependencies:
       tsup:
         specifier: ^8.3.5
@@ -24,8 +24,8 @@ importers:
   node:
     dependencies:
       '@vcdn/sdk-shared':
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.1.1
+        version: 0.1.1
       axios:
         specifier: ^1.15.2
         version: 1.15.2
@@ -381,6 +381,9 @@ packages:
 
   '@types/node@20.19.39':
     resolution: {integrity: sha512-orrrD74MBUyK8jOAD/r0+lfa1I2MO6I+vAkmAWzMYbCcgrN4lCrmK52gRFQq/JRxfYPfonkr4b0jcY7Olqdqbw==}
+
+  '@vcdn/sdk-shared@0.1.1':
+    resolution: {integrity: sha512-Ky1Twxf5LA+4pwigP0L1IXHy+0YNNIdNZdAhHc7ppAsrektEzLhHwAL+QoXW5OP4W8YCjUI5cR9U/oWmhUrg/A==}
 
   '@videojs/vhs-utils@4.1.1':
     resolution: {integrity: sha512-5iLX6sR2ownbv4Mtejw6Ax+naosGvoT9kY+gcuHzANyUZZ+4NpeNdKMUhb6ag0acYej1Y7cmr/F2+4PrggMiVA==}
@@ -954,6 +957,8 @@ snapshots:
   '@types/node@20.19.39':
     dependencies:
       undici-types: 6.21.0
+
+  '@vcdn/sdk-shared@0.1.1': {}
 
   '@videojs/vhs-utils@4.1.1':
     dependencies:

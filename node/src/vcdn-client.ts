@@ -383,8 +383,10 @@ export class VcdnClient {
 
     const total = work.length;
     let done = 0;
+    const percentFor = (completed: number) =>
+      total === 0 ? 100 : Math.min(100, Math.round((completed / total) * 100));
     const report = () => {
-      const pct = total === 0 ? 100 : Math.min(100, Math.round((done / total) * 100));
+      const pct = percentFor(done);
       options.onProgress?.(pct);
     };
     report();
@@ -399,8 +401,9 @@ export class VcdnClient {
       )}`;
       const head = await this.axios.head(headUrl, { signal });
       if (head.status === 200) {
+        const pct = percentFor(done + 1);
         if (debug) {
-          console.debug(`[vcdn] skip (exists) ${item.objectName}`);
+          console.debug(`[vcdn] skip (exists) ${item.objectName} (${pct}%)`);
         }
         done++;
         report();
@@ -449,8 +452,9 @@ export class VcdnClient {
         bytesUploaded += st.size;
       }
 
+      const pct = percentFor(done + 1);
       if (debug) {
-        console.debug(`[vcdn] uploaded ${item.objectName} (${st.size} bytes)`);
+        console.debug(`[vcdn] uploaded ${item.objectName} (${st.size} bytes, ${pct}%)`);
       }
       done++;
       report();
@@ -461,7 +465,9 @@ export class VcdnClient {
     if (debug && options.metrics && bytesUploaded > 0) {
       const sec = (Date.now() - wall0) / 1000;
       const mbps = (bytesUploaded / (1024 * 1024)) / Math.max(sec, 1e-6);
-      console.debug(`[vcdn] segment throughput ~${mbps.toFixed(2)} MiB/s wall (${bytesUploaded} bytes)`);
+      console.debug(
+        `[vcdn] segment throughput ~${mbps.toFixed(2)} MiB/s wall (${percentFor(done)}%, ${bytesUploaded} bytes)`,
+      );
     }
 
     const playlistUrl = `${API_VIDEOS}/${encodeURIComponent(videoId)}/playlist`;
