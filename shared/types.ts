@@ -10,6 +10,16 @@ export interface Video {
   poster_url?: string | null;
   embed_url: string;
   created_at: string;
+  /** True when playback is available (at least one source works). */
+  playback_ready?: boolean;
+  /** Replication health: "healthy" | "partial" | "origin_only" | "degraded" | "pending" | "failed". */
+  replication_health?: string;
+  /** Count of usable playback sources. */
+  healthy_replicas?: number;
+  /** Total published playback sources. */
+  total_replicas?: number;
+  /** True when MinIO origin is among playback sources. */
+  origin_fallback_active?: boolean;
 }
 
 export interface VideoListResponse {

@@ -1,6 +1,6 @@
 {
   "name": "@vcdn/node",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Node.js SDK for VCDN upload-service public API",
   "license": "UNLICENSED",
   "type": "module",

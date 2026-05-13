@@ -8,6 +8,8 @@ import fg from "fast-glob";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
+import http from "node:http";
+import https from "node:https";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import pLimit from "p-limit";
@@ -48,6 +50,16 @@ export interface UploadHLSResult {
   video_id: string;
   status: "ready";
   upload_id: string;
+  /** True when playback is available (at least one source works). */
+  playbackReady: boolean;
+  /** Replication health: "healthy" | "partial" | "origin_only" | "degraded" | "pending". */
+  replicationHealth?: string;
+  /** Count of usable playback sources. */
+  healthyReplicas?: number;
+  /** Total published playback sources. */
+  totalReplicas?: number;
+  /** True when MinIO origin is among playback sources. */
+  originFallbackActive?: boolean;
   /** Bytes uploaded for TS segments only (excludes skipped). */
   bytesUploaded?: number;
   /** Wall-clock ms spent in TS segment PUT requests (per attempt, summed). */
@@ -193,7 +205,28 @@ interface InitHlsResponse {
 interface VideoRow {
   id: string;
   status: string;
+  playback_ready?: boolean;
+  replication_health?: string;
+  healthy_replicas?: number;
+  total_replicas?: number;
+  origin_fallback_active?: boolean;
   error?: string | null;
+}
+
+interface UploadManifestSegment {
+  filename: string;
+  size?: number;
+  etag?: string;
+}
+
+interface UploadManifestResponse {
+  video_id: string;
+  upload_id?: string;
+  status?: string;
+  uploaded?: UploadManifestSegment[];
+  uploaded_count?: number;
+  uploaded_bytes?: number;
+  playlist_uploaded?: boolean;
 }
 
 async function sha256FileHex(absPath: string): Promise<string> {
@@ -225,6 +258,8 @@ export class VcdnClient {
       timeout: 0,
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
+      httpAgent: new http.Agent({ keepAlive: true, maxSockets: 64, maxFreeSockets: 16 }),
+      httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 64, maxFreeSockets: 16 }),
     });
   }
 
@@ -255,7 +290,10 @@ export class VcdnClient {
         throw httpVcdnError("GET video", res);
       }
       const row = res.data;
-      if (row.status === "ready") {
+      // Playback-ready architecture: stop polling when playback is available,
+      // regardless of replication completeness. Falls back to status check
+      // for backward compatibility with older backends.
+      if (row.playback_ready === true || row.status === "ready") {
         return row;
       }
       if (row.status === "failed") {
@@ -381,6 +419,10 @@ export class VcdnClient {
     const videoId = initRes.video_id;
     const uploadId = initRes.upload_id;
 
+    const uploadedManifest = await this.fetchUploadManifest(videoId, signal, debug);
+    const uploadedSet = new Set(uploadedManifest?.uploaded?.map((s) => sanitizeSegmentName(s.filename)).filter(Boolean));
+    const useManifestSkips = uploadedManifest !== null;
+
     const total = work.length;
     let done = 0;
     const percentFor = (completed: number) =>
@@ -396,21 +438,33 @@ export class VcdnClient {
     const wall0 = options.metrics ? Date.now() : 0;
 
     const runSegment = async (item: (typeof work)[0]) => {
-      const headUrl = `${API_VIDEOS}/${encodeURIComponent(videoId)}/segments/${encodeURIComponent(
-        item.objectName,
-      )}`;
-      const head = await this.axios.head(headUrl, { signal });
-      if (head.status === 200) {
+      if (uploadedSet.has(item.objectName)) {
         const pct = percentFor(done + 1);
         if (debug) {
-          console.debug(`[vcdn] skip (exists) ${item.objectName} (${pct}%)`);
+          console.debug(`[vcdn] skip (manifest exists) ${item.objectName} (${pct}%)`);
         }
         done++;
         report();
         return;
       }
-      if (head.status !== 404) {
-        throw httpVcdnError(`HEAD segment ${item.objectName}`, head);
+
+      if (!useManifestSkips) {
+        const headUrl = `${API_VIDEOS}/${encodeURIComponent(videoId)}/segments/${encodeURIComponent(
+          item.objectName,
+        )}`;
+        const head = await this.axios.head(headUrl, { signal });
+        if (head.status === 200) {
+          const pct = percentFor(done + 1);
+          if (debug) {
+            console.debug(`[vcdn] skip (HEAD exists) ${item.objectName} (${pct}%)`);
+          }
+          done++;
+          report();
+          return;
+        }
+        if (head.status !== 404) {
+          throw httpVcdnError(`HEAD segment ${item.objectName}`, head);
+        }
       }
 
       const putUrl = `${API_VIDEOS}/${encodeURIComponent(videoId)}/segments/${encodeURIComponent(
@@ -511,7 +565,7 @@ export class VcdnClient {
       "POST complete",
     );
 
-    await this.waitUntilReady(videoId, {
+    const readyRow = await this.waitUntilReady(videoId, {
       signal,
       timeoutMs: options.waitTimeoutMs ?? 900_000,
       pollIntervalMs: options.pollIntervalMs ?? 2000,
@@ -521,11 +575,38 @@ export class VcdnClient {
       video_id: videoId,
       status: "ready",
       upload_id: uploadId,
+      playbackReady: true,
+      replicationHealth: readyRow.replication_health ?? "healthy",
+      healthyReplicas: readyRow.healthy_replicas,
+      totalReplicas: readyRow.total_replicas,
+      originFallbackActive: readyRow.origin_fallback_active,
     };
     if (options.metrics) {
       result.bytesUploaded = bytesUploaded;
       result.segmentUploadMs = segmentUploadMs;
     }
     return result;
+  }
+
+  private async fetchUploadManifest(
+    videoId: string,
+    signal: AbortSignal | undefined,
+    debug: boolean,
+  ): Promise<UploadManifestResponse | null> {
+    const url = `${API_VIDEOS}/${encodeURIComponent(videoId)}/upload-manifest`;
+    const res = await this.axios.get<UploadManifestResponse>(url, { signal });
+    if (res.status === 200) {
+      if (debug) {
+        console.debug(`[vcdn] upload manifest returned ${res.data.uploaded_count ?? res.data.uploaded?.length ?? 0} uploaded segments`);
+      }
+      return res.data;
+    }
+    if (res.status === 404 || res.status === 405) {
+      if (debug) {
+        console.debug(`[vcdn] upload manifest unavailable (HTTP ${res.status}); falling back to per-segment HEAD`);
+      }
+      return null;
+    }
+    throw httpVcdnError("GET upload manifest", res);
   }
 }

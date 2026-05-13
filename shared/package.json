@@ -1,6 +1,6 @@
 {
   "name": "@vcdn/sdk-shared",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Shared types and HTTP helpers for VCDN browser and Node SDKs",
   "license": "UNLICENSED",
   "type": "module",
