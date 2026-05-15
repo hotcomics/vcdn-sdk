@@ -1,6 +1,6 @@
 {
   "name": "@vcdn/node",
-  "version": "0.1.5",
+  "version": "1.0.0",
   "description": "Node.js SDK for VCDN upload-service public API",
   "license": "UNLICENSED",
   "type": "module",
@@ -25,6 +25,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap --external axios --external fast-glob --external m3u8-parser --external p-limit",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist",
     "prepublishOnly": "pnpm run build && pnpm run typecheck"
   },
@@ -42,6 +44,7 @@
     "@types/m3u8-parser": "^7.2.6",
     "@types/node": "^20.14.11",
     "tsup": "^8.3.5",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.4"
   }
 }

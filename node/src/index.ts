@@ -17,3 +17,30 @@ export type {
   PlaybackTokenRequest,
 } from "@vcdn/sdk-shared";
 export { VcdnApiError } from "@vcdn/sdk-shared";
+
+// ─── Normalize Pipeline Exports ─────────────────────────────────────────────
+export {
+  TempWorkspace,
+  parseAndValidateManifest,
+  validateHLS,
+  detectFfmpeg,
+  detectFfprobe,
+  runFfmpeg,
+  probeHLS,
+  normalizeHLS,
+  calculateHlsTime,
+} from "./normalize/index.js";
+export type {
+  NormalizeMode,
+  NormalizeOptions,
+  NormalizePhase,
+  NormalizeProgressEvent,
+  NormalizePipelineOptions,
+  NormalizePipelineResult,
+  ValidationResult,
+  SegmentValidation,
+  ProbeResult,
+  ManifestParseResult,
+  ManifestSegmentInfo,
+  FfmpegRunOptions,
+} from "./normalize/index.js";
